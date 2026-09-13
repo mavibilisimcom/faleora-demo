@@ -1,0 +1,1 @@
+function pulseOracle(){const o=document.getElementById('oracleOrb');o.classList.add('pulse');setTimeout(()=>o.classList.remove('pulse'),650);if(navigator.vibrate)navigator.vibrate(20)}function flipTarot(){const c=document.getElementById('tarotCard');c.classList.toggle('flipped');if(navigator.vibrate)navigator.vibrate(35)}
