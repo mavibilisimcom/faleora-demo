@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import smtplib
 from email.message import EmailMessage
 
@@ -47,8 +48,8 @@ def dispatch_notification(channel: str, recipient: str, message: str, title: str
         return _post(settings.sms_provider_url, settings.sms_api_key, {"to": recipient, "message": message})
 
     if "push" in c:
-        push_url = getattr(settings, "push_provider_url", "")
-        push_key = getattr(settings, "push_api_key", "")
+        push_url = os.getenv("PUSH_PROVIDER_URL", "")
+        push_key = os.getenv("PUSH_API_KEY", "")
         return _post(push_url, push_key, {"to": recipient, "title": title, "message": message})
 
     return "failed", "unknown_channel"
