@@ -3,7 +3,8 @@ from __future__ import annotations
 from fastapi import APIRouter
 from pydantic import BaseModel
 
-from main import send_notification, settings
+from main import settings
+from provider_dispatch import dispatch_notification
 
 router = APIRouter(prefix="/api/providers", tags=["providers"])
 
@@ -12,6 +13,7 @@ class ProviderTest(BaseModel):
     channel: str
     recipient: str
     message: str = "FALEORA bildirim altyapısı test mesajı."
+    title: str = "FALEORA Test Bildirimi"
 
 
 def _configured(value: str) -> bool:
@@ -44,5 +46,5 @@ def provider_status():
 
 @router.post("/test")
 def test_provider(payload: ProviderTest):
-    status, provider = send_notification(payload.channel, payload.recipient, payload.message)
+    status, provider = dispatch_notification(payload.channel, payload.recipient, payload.message, payload.title)
     return {"status": status, "provider": provider, "channel": payload.channel, "recipient": payload.recipient}
