@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import os
+
 from fastapi import APIRouter
 from pydantic import BaseModel
 
@@ -22,6 +24,8 @@ def _configured(value: str) -> bool:
 
 @router.get("/status")
 def provider_status():
+    push_url = os.getenv("PUSH_PROVIDER_URL", "")
+    push_key = os.getenv("PUSH_API_KEY", "")
     return {
         "notification_mode": settings.notification_mode,
         "email": {
@@ -38,8 +42,8 @@ def provider_status():
             "endpoint": settings.whatsapp_provider_url or None,
         },
         "push": {
-            "configured": _configured(getattr(settings, "push_provider_url", "")) and _configured(getattr(settings, "push_api_key", "")),
-            "endpoint": getattr(settings, "push_provider_url", "") or None,
+            "configured": _configured(push_url) and _configured(push_key),
+            "endpoint": push_url or None,
         },
     }
 
