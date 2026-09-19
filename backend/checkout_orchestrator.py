@@ -5,6 +5,8 @@ from fastapi import APIRouter,Depends,HTTPException
 from pydantic import BaseModel
 from sqlalchemy import DateTime,Float,Integer,String,Text,create_engine,select
 from sqlalchemy.orm import DeclarativeBase,Mapped,Session,mapped_column,sessionmaker
+from decimal import Decimal
+from transaction_service import CheckoutInput,CheckoutError,validate_checkout
 DB=os.getenv("DATABASE_URL","sqlite:///./faleora.db");e=create_engine(DB,future=True,connect_args={"check_same_thread":False} if DB.startswith("sqlite") else {});S=sessionmaker(bind=e,autoflush=False,expire_on_commit=False)
 class B(DeclarativeBase):pass
 class Finalization(B):
@@ -18,9 +20,10 @@ class FinalizeIn(BaseModel):venue_id:int;order_id:int;order_total:float;paid_tot
 @router.post("/finalize")
 def finalize(p:FinalizeIn,db:Session=Depends(dbd)):
  if db.scalar(select(Finalization).where(Finalization.order_id==p.order_id)):raise HTTPException(409,"Adisyon daha önce kapatıldı")
- if round(p.paid_total,2)<round(p.order_total,2):raise HTTPException(409,"Ödeme tamamlanmadı")
+ try: result=validate_checkout(CheckoutInput(p.order_id,Decimal(str(p.order_total)),Decimal(str(p.paid_total)),Decimal(str(p.stock_cost)),p.reward_amount))
+ except CheckoutError as exc:raise HTTPException(409,str(exc))
  x=Finalization(venue_id=p.venue_id,order_id=p.order_id,order_total=p.order_total,paid_total=p.paid_total,stock_cost=p.stock_cost,reward_amount=p.reward_amount,summary=json.dumps({"actor":p.actor_ref,"items":p.items,"closed_at":datetime.now(timezone.utc).isoformat()}));db.add(x);db.commit();db.refresh(x)
- return {"id":x.id,"status":"closed","gross_margin":round(p.order_total-p.stock_cost,2),"reward":p.reward_amount}
+ return {"id":x.id,"status":"closed","gross_margin":float(result["gross_margin"]),"change":float(result["change"]),"reward":p.reward_amount}
 @router.get("/{order_id}")
 def status(order_id:int,db:Session=Depends(dbd)):
  x=db.scalar(select(Finalization).where(Finalization.order_id==order_id))
