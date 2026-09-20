@@ -24,6 +24,8 @@ from offline_sync import router as offline_sync_router
 from sales_engine import router as sales_router
 from pilot_core import router as pilot_router
 from cash_reconciliation import router as cash_reconciliation_router
+from pilot_transaction import router as pilot_transaction_router
+from realtime import router as realtime_router
 
 app.include_router(occasion_router)
 app.include_router(campaign_router)
@@ -49,6 +51,8 @@ app.include_router(offline_sync_router)
 app.include_router(sales_router)
 app.include_router(pilot_router)
 app.include_router(cash_reconciliation_router)
+app.include_router(pilot_transaction_router)
+app.include_router(realtime_router)
 
 scheduler.add_job(lambda: process_due_occasions(dispatch_notification),"cron",hour=10,minute=0,id="occasion_notifications",replace_existing=True)
 scheduler.add_job(lambda: process_scheduled_campaigns(dispatch_notification),"interval",minutes=5,id="scheduled_notification_campaigns",replace_existing=True)
