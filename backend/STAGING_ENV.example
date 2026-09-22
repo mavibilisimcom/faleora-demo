@@ -1,0 +1,3 @@
+POSTGRES_PASSWORD=replace-with-strong-password
+AUTH_SECRET=replace-with-40-plus-random-characters
+FRONTEND_ORIGINS=https://your-staging-domain.example
