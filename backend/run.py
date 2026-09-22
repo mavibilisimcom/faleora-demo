@@ -29,6 +29,9 @@ from realtime import router as realtime_router
 from finance_core import router as finance_router
 from expense_documents import router as documents_router
 from e_document_connector import router as e_document_router
+from observability import request_context_middleware
+
+app.middleware("http")(request_context_middleware)
 
 app.include_router(occasion_router)
 app.include_router(campaign_router)
