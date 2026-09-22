@@ -7,6 +7,17 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: faleora_test
+          POSTGRES_USER: faleora
+          POSTGRES_PASSWORD: faleora_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U faleora -d faleora_test"
+          --health-interval 5s --health-timeout 5s --health-retries 10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -15,8 +26,25 @@ jobs:
       - name: Install dependencies
         working-directory: backend
         run: pip install -r requirements.txt
-      - name: Run tests
+      - name: Unit and integration tests
         working-directory: backend
         env:
           PYTHONPATH: .
         run: python -m pytest
+      - name: PostgreSQL import smoke
+        working-directory: backend
+        env:
+          PYTHONPATH: .
+          DATABASE_URL: postgresql+psycopg://faleora:faleora_test@localhost:5432/faleora_test
+          AUTH_SECRET: ci-only-secret-ci-only-secret-123456
+        run: python -c "import run; print('postgres import smoke ok')"
+      - name: Staging readiness logic
+        working-directory: backend
+        env:
+          PYTHONPATH: .
+          APP_ENV: staging
+          DATABASE_URL: postgresql+psycopg://faleora:faleora_test@localhost:5432/faleora_test
+          AUTH_SECRET: ci-only-secret-ci-only-secret-123456
+          FRONTEND_ORIGINS: https://staging.example.test
+          NOTIFICATION_MODE: dry_run
+        run: python -c "from staging_check import evaluate; r=evaluate(); print(r); assert r['ready']"
