@@ -1,0 +1,29 @@
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: faleora
+      POSTGRES_USER: faleora
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - faleora_pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL","pg_isready -U faleora -d faleora"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+  api:
+    build: .
+    environment:
+      APP_ENV: staging
+      DATABASE_URL: postgresql+psycopg://faleora:${POSTGRES_PASSWORD}@db:5432/faleora
+      AUTH_SECRET: ${AUTH_SECRET}
+      FRONTEND_ORIGINS: ${FRONTEND_ORIGINS}
+      NOTIFICATION_MODE: dry_run
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+volumes:
+  faleora_pg:
