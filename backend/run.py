@@ -26,6 +26,9 @@ from pilot_core import router as pilot_router
 from cash_reconciliation import router as cash_reconciliation_router
 from pilot_transaction import router as pilot_transaction_router
 from realtime import router as realtime_router
+from finance_core import router as finance_router
+from expense_documents import router as documents_router
+from e_document_connector import router as e_document_router
 
 app.include_router(occasion_router)
 app.include_router(campaign_router)
@@ -53,6 +56,9 @@ app.include_router(pilot_router)
 app.include_router(cash_reconciliation_router)
 app.include_router(pilot_transaction_router)
 app.include_router(realtime_router)
+app.include_router(finance_router)
+app.include_router(documents_router)
+app.include_router(e_document_router)
 
 scheduler.add_job(lambda: process_due_occasions(dispatch_notification),"cron",hour=10,minute=0,id="occasion_notifications",replace_existing=True)
 scheduler.add_job(lambda: process_scheduled_campaigns(dispatch_notification),"interval",minutes=5,id="scheduled_notification_campaigns",replace_existing=True)
