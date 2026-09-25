@@ -21,6 +21,7 @@ def dbd():
  try:yield d
  finally:d.close()
 class ProductIn(BaseModel):venue_id:int;name:str;category:str;price:float;station:str="kitchen"
+class ProductUpdate(BaseModel):name:str|None=None;category:str|None=None;price:float|None=None;station:str|None=None;active:int|None=None
 class Line(BaseModel):product_id:int;qty:int=1;notes:str=""
 class OrderIn(BaseModel):venue_id:int;source:str="table";table_ref:str="";items:list[Line]
 @router.post("/products")
@@ -49,3 +50,15 @@ def state(item_id:int,state:str,db:Session=Depends(dbd)):
  x=db.get(OrderItem,item_id)
  if not x:raise HTTPException(404,"Kalem bulunamadı")
  x.state=state;db.commit();return {"ok":True}
+
+@router.patch("/products/{product_id}")
+def update_product(product_id:int,p:ProductUpdate,db:Session=Depends(dbd)):
+ x=db.get(Product,product_id)
+ if not x:raise HTTPException(404,"Ürün bulunamadı")
+ for k,v in p.model_dump(exclude_none=True).items():setattr(x,k,v)
+ db.commit();return {"id":x.id,"name":x.name,"category":x.category,"price":x.price,"station":x.station,"active":x.active}
+@router.post("/products/{product_id}/sold-out")
+def sold_out(product_id:int,sold_out:bool=True,db:Session=Depends(dbd)):
+ x=db.get(Product,product_id)
+ if not x:raise HTTPException(404,"Ürün bulunamadı")
+ x.active=0 if sold_out else 1;db.commit();return {"id":x.id,"sold_out":sold_out}
