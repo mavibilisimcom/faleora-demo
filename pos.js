@@ -1,4 +1,4 @@
-const catalog=[
+let catalog=[
 {id:1,n:'Espresso',p:95,c:'kahve',i:'☕',b:'86910001'},{id:2,n:'Latte',p:185,c:'kahve',i:'🥛',b:'86910002'},{id:3,n:'Türk Kahvesi',p:120,c:'kahve',i:'☕',b:'86910003'},{id:4,n:'Flat White',p:170,c:'kahve',i:'☕',b:'86910004'},{id:5,n:'Limonata',p:120,c:'icecek',i:'🍋',b:'86920001'},{id:6,n:'Soğuk Kahve',p:195,c:'icecek',i:'🧊',b:'86920002'},{id:7,n:'Peynirli Burger',p:320,c:'yemek',i:'🍔',b:'86930001'},{id:8,n:'Pizza',p:390,c:'yemek',i:'🍕',b:'86930002'},{id:9,n:'Makarna',p:340,c:'yemek',i:'🍝',b:'86930003'},{id:10,n:'Tiramisu',p:190,c:'tatli',i:'🍰',b:'86940001'},{id:11,n:'Cheesecake',p:210,c:'tatli',i:'🍰',b:'86940002'},{id:12,n:'Kahve + Tatlı Menü',p:330,c:'menu',i:'🎁',b:'86950001'}];
 let items=[],currentCat='all',online=navigator.onLine,qtyBuffer='',held=JSON.parse(localStorage.getItem('faleora_pos_held')||'[]'),queue=JSON.parse(localStorage.getItem('faleora_pos_queue')||'[]');
 const money=v=>new Intl.NumberFormat('tr-TR',{style:'currency',currency:'TRY'}).format(v);
@@ -16,4 +16,6 @@ function commit(type,note){const tx={id:crypto.randomUUID?crypto.randomUUID():'t
 function toggleNet(){online=!online;if(online)syncQueue();updateNet()}function syncQueue(){queue=queue.map(x=>({...x,state:'sent'}));queue=[];localStorage.setItem('faleora_pos_queue','[]');msg('Bekleyen yerel işlemler senkronize edildi.')}
 function updateNet(){const n=document.getElementById('net'),b=document.getElementById('offlineBanner');n.textContent=online?'● ÇEVRİMİÇİ':'● ÇEVRİMDIŞI';n.className='chip '+(online?'online':'offline');b.style.display=online?'none':'block';document.getElementById('queueCount').textContent=queue.length}
 function msg(t){document.getElementById('msg').innerHTML="<p class='note'>"+t+"</p>"}
-window.addEventListener('online',()=>{online=true;syncQueue();updateNet()});window.addEventListener('offline',()=>{online=false;updateNet()});drawProducts();render();
+async function loadCatalog(){if(window.FaleoraApi&&FaleoraApi.configured()){try{const rows=await FaleoraApi.get('/api/pos/venues/1/products');if(rows.length){catalog=rows.map(x=>({id:x.id,n:x.name,p:x.price,c:x.category,i:'◈',b:String(x.id)}));drawProducts();msg('Ürün kataloğu API üzerinden yüklendi.')}}catch(e){msg('Katalog API erişilemedi; yerel katalog kullanılıyor.')}}}
+function resumeHeld(){if(!held.length)return msg('Bekleyen satış yok.');const x=held.shift();items=x.items||[];localStorage.setItem('faleora_pos_held',JSON.stringify(held));render();msg('Bekleyen satış geri açıldı. Kalan: '+held.length)}
+window.addEventListener('online',()=>{online=true;syncQueue();updateNet()});window.addEventListener('offline',()=>{online=false;updateNet()});drawProducts();render();loadCatalog();
